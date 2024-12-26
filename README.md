@@ -93,13 +93,13 @@ _**2\. Kubernetes Architecture**_
 
 > ###### _**Install and prepare kubernetes cluster in ec2 using KIND(Kubernetes in Docker)**_
 
-step 1: Create a EC2 instance
+_**step 1:**_ Create a EC2 instance
 
-step 2: Connect with SSH client
+_**step 2:**_ Connect with SSH client
 
-step 3: Create a file called install\_kind.sh using command `vim install_kind.sh`
+_**step 3:**_ Create a file called install\_kind.sh using command `vim install_kind.sh`
 
-step 4: pest the following code inside the file [reference.](https://github.com/LondheShubham153/kubestarter/tree/main/kind-cluster#1-installing-kind-and-kubectl)
+_**step 4:**_ pest the following code inside the file [reference.](https://github.com/LondheShubham153/kubestarter/tree/main/kind-cluster#1-installing-kind-and-kubectl)
 
 ```
 
@@ -128,11 +128,151 @@ And always take care of the version. In adove code the version is `v0.20.0` but 
 
 ![](kind-version.png)
 
-step 5: Give permerision to that file to execute by executing the command `chmod 777 install_kind.sh` 
+_**step 5:**_ Give permerision to that file to execute by executing the command `chmod 777 install_kind.sh` 
 
-step 6: To complete the installation of KIND and Kubectl in your ec2 instance we have to run `./install_kind.sh` .
+_**step 6:**_ To complete the installation of KIND and Kubectl in your ec2 instance we have to run `./install_kind.sh` .
 
-step 7: To run KIND we need to install Docker. To install Docker we need to run some commands
+_**step 7:**_ To run KIND we need to install Docker. To install Docker we need to run some commands
 
 1.  `sudo apt-get update`
-2.  `sudo apt-get install docker.io`
+2.  `sudo apt-get install docker.io` 
+3.  `docker ps`
+4.  `sudo usermod -aG docker $USER && newgrp docker`
+
+_**step 8:**_ Now check all the versions
+
+1.  `docker --version`
+2.  `kubectl version`
+
+_**step 9:**_ We will create 4 nodes, where 1 node will be master node and 3 nodes will be worker node. To do that we need to configure a YML file. Run the command `vim config.yml` and then pest the code
+
+```
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+nodes:
+- role: control-plane
+  image: kindest/node:v1.31.2
+- role: worker
+  image: kindest/node:v1.31.2
+- role: worker
+  image: kindest/node:v1.31.2
+- role: worker
+  image: kindest/node:v1.31.2
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+```
+
+#### **General Overview**
+
+*   **kind:** Specifies the resource type, which is `Cluster` in this case.
+*   **apiVersion:** Defines the API version of the Kind configuration file (`kind.x-k8s.io/v1alpha4`).
+
+#### **Node Configuration**
+
+*   The `node` section defines the nodes of the cluster:
+    *   **Control Plane Node:**
+        *   Role: `control-plane`.
+        *   Manages the cluster state and handles scheduling workloads.
+        *   Uses the image: `kindest/node:v1.31.2`.
+    *   **Worker Nodes:**
+        *   Three worker nodes are defined to run workloads (pods).
+        *   Each worker node uses the image: `kindest/node:v1.31.2`.
+
+#### **Extra Port Mappings**
+
+*   **Specific to the Last Worker Node:**
+    *   **containerPort: 80 → hostPort: 80**
+        *   Maps container port 80 to host port 80 for HTTP traffic.
+    *   **containerPort: 443 → hostPort: 443**
+        *   Maps container port 443 to host port 443 for HTTPS traffic.
+    *   **Protocol: TCP**
+        *   Specifies TCP as the communication protocol for these mappings.
+
+_**step 10:**_ Run the command `kind create cluster --name=tws-cluster --config=config.yml` to create the cluster. 
+
+*   `--name=tws-cluster` is referring that your want your cluster to be named `tws-cluster`
+*   `--config=config.yml` is referring that the configuration file you are using to create the cluster, like here in this case you are using `config.yml` .  
+    ![](creation-cluster-kind.png)
+
+To get information regarding cluster you have created run the command `kubectl cluster-info --context kind-tws-cluster`.
+
+If you want to check how many number of nodes are running currently you have to run `kubectl get nodes`. And if you want to mention the cluster name then run command `kubectl get nodes --context kind-tws-cluster` .
+
+![](list-of-nodes.png)
+
+_**Now you cluster creation using KIND is done**_
+
+> To create cluster you can also use minikube. To install minikube you can take reference from [here](https://github.com/LondheShubham153/kubestarter/blob/main/minikube_installation.md)
+
+> ## _**Namespace**_
+
+![](k8scomponents.drawio.webp)
+
+### **Description of the Kubernetes Architecture in the Image**
+
+#### **General Overview**
+
+*   The image illustrates the workflow of two applications (NGINX and MySQL) deployed in Kubernetes.
+*   Both applications follow a similar flow: **Namespace → Pod → Deployment → Service → Users**.
+
+---
+
+#### **Top Section: NGINX Application**
+
+1.  **Namespace:**
+    *   A logical partition within the Kubernetes cluster.
+    *   Used to isolate the resources for the NGINX application.
+2.  **Docker Container Running NGINX:**
+    *   A Docker container running the NGINX web server application.
+    *   Forms the basis of the Kubernetes pod.
+3.  **Pod:**
+    *   The smallest deployable unit in Kubernetes.
+    *   Contains the Docker container running NGINX.
+4.  **Deployment:**
+    *   Manages the pods for the NGINX application.
+    *   Ensures the desired number of pods is running and maintains updates or rollbacks.
+5.  **Service:**
+    *   Exposes the NGINX pods to external users.
+    *   Acts as a load balancer for requests to the NGINX application.
+6.  **Users:**
+    *   External users access the NGINX service through the defined endpoints.
+
+---
+
+#### **Bottom Section: MySQL Application**
+
+1.  **Namespace:**
+    *   A separate logical partition for the MySQL application.
+    *   Helps in isolating resources from other applications.
+2.  **Docker Container Running MySQL:**
+    *   A Docker container running the MySQL database service.
+    *   Forms the foundation for the pod.
+3.  **Pod:**
+    *   Contains the MySQL container.
+    *   Serves as the operational unit for the database workload.
+4.  **Deployment:**
+    *   Manages MySQL pods by ensuring availability and scaling.
+    *   Handles updates and rollbacks for the MySQL service.
+5.  **Service:**
+    *   Exposes the MySQL pods to external or internal users.
+    *   Facilitates communication with the database service using stable endpoints.
+6.  **Users:**
+    *   Users (or other applications) access the MySQL service through defined endpoints.
+
+---
+
+#### **Key Observations**
+
+*   Both applications use the same Kubernetes components but operate independently in their respective namespaces.
+*   Services abstract the complexities of exposing pods while ensuring seamless communication with users.
+*   Deployments handle pod orchestration for reliability and scalability.
+
+> ### Create architecture above shown in then image (Namespace)
+
+To get list of namespaces you can run command `kubectl get namespaces` or `kubectl get ns`
