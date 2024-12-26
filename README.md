@@ -1,6 +1,6 @@
 > # KUBERNETES TUTORIAL
 
-> **Topics Covered**
+> #### **Topics Covered**
 
 1.  **Core Concept**: 
     1.  Monolith vs Microservices
@@ -91,4 +91,48 @@ _**2\. Kubernetes Architecture**_
 
 **This architecture ensures Kubernetes can efficiently manage and scale containerized applications while providing fault tolerance and high availability.**
 
----
+> ###### _**Install and prepare kubernetes cluster in ec2 using KIND(Kubernetes in Docker)**_
+
+step 1: Create a EC2 instance
+
+step 2: Connect with SSH client
+
+step 3: Create a file called install\_kind.sh using command `vim install_kind.sh`
+
+step 4: pest the following code inside the file [reference.](https://github.com/LondheShubham153/kubestarter/tree/main/kind-cluster#1-installing-kind-and-kubectl)
+
+```
+
+#!/bin/bash
+
+[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+chmod +x ./kind
+sudo cp ./kind /usr/local/bin/kind
+
+VERSION="v1.30.0"
+URL="https://dl.k8s.io/release/${VERSION}/bin/linux/amd64/kubectl"
+INSTALL_DIR="/usr/local/bin"
+
+curl -LO "$URL"
+chmod +x kubectl
+sudo mv kubectl $INSTALL_DIR/
+kubectl version --client
+
+rm -f kubectl
+rm -rf kind
+
+echo "kind & kubectl installation complete."
+```
+
+And always take care of the version. In adove code the version is `v0.20.0` but the current actual version is `v0.26.0`  which is will get from [here.](https://kind.sigs.k8s.io/docs/user/quick-start/)
+
+![](kind-version.png)
+
+step 5: Give permerision to that file to execute by executing the command `chmod 777 install_kind.sh` 
+
+step 6: To complete the installation of KIND and Kubectl in your ec2 instance we have to run `./install_kind.sh` .
+
+step 7: To run KIND we need to install Docker. To install Docker we need to run some commands
+
+1.  `sudo apt-get update`
+2.  `sudo apt-get install docker.io`
