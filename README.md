@@ -90,3 +90,5 @@ _**2\. Kubernetes Architecture**_
     3.  The **Service Proxy** directs traffic to the correct pods using networking rules.
 
 **This architecture ensures Kubernetes can efficiently manage and scale containerized applications while providing fault tolerance and high availability.**
+
+---
