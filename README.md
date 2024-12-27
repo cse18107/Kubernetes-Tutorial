@@ -315,7 +315,7 @@ _**Now you cluster creation using KIND is done**_
 *   To create and run a pod in a specific namespace  you should run  `kubectl run nginx --image=nginx -n nginx` where the last nginx is refering to the name of the namespace.
 *   To delete namespace run the command `kubectl delete ns nginx`.
 
-> 👉👉**Create architecture above shown in then image (Namespace)**
+> ## _**👉👉Create architecture above shown in then image (Namespace)**_
 
 We will create this architecture by creating yml files, and we will work inside nginx folder.
 
