@@ -52,19 +52,19 @@
     2.  Image Scanning
     3.  Network Policies
     4.  Secrets Encryption
-10.  Cloud-Native Kubernetes:
-    1.  Managed Services (EKS, AKS, GKE)
-    2.  Cluster Autoscaler
-    3.  Spot/Preemptible Nodes
-11.  Debugging and Troubleshooting:
-    1.  Kubectl Debugging
-    2.  Logs
-    3.  Resource Usage Analysis
-12.  Projects:
-    1.  CI/CD Integration: Kubernetes with Jenkins CI/CD, GitOps with ArgoCD
-    2.  Microservices with MongoDB
-    3.  .Net, Python, Three-tier App
-    4.  Monitoring With Prometheus and Grafana
+10.  Cloud-Native Kubernetes:  
+    1\. Managed Services (EKS, AKS, GKE)  
+    2\. Cluster Autoscaler  
+    3\. Spot/Preemptible Nodes
+11.  Debugging and Troubleshooting:  
+    1\. Kubectl Debugging  
+    2\. Logs  
+    3\. Resource Usage Analysis
+12.  Projects:  
+    1\. CI/CD Integration: Kubernetes with Jenkins CI/CD, GitOps with ArgoCD  
+    2\. Microservices with MongoDB  
+    3\. .Net, Python, Three-tier App  
+    4\. Monitoring With Prometheus and Grafana
 
 ---
 
@@ -350,4 +350,73 @@ spec:
 
 **➡️STEP 5:** run command `kubectl apply -f pod.yml`
 
-> Note ▶ If you want to go inside the pod then run command `kubectl exec -it nginx-pod -n nginx --bash`
+> Note ▶ 
+> 
+> *   If you want to go inside the pod then run command `kubectl exec -it nginx-pod -n nginx --bash`
+> *   If you want to debug your pod run the command `kubectl describe pod/nginx-pod -n nginx`  
+>     ![](describe-debug.png)
+
+**➡️STEP 6:** for application scalibility we need deployment which will later increase or decrease the number of pods according to requirement or traffic. Create a file called `deployment.yml` and pest the code 
+
+```
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+ name: nginx-deployment
+ namespace: nginx
+spec:
+ replicas: 2
+ selector:
+   matchLabels:
+     app: nginx
+ template:
+   metadata:
+     name: nginx-dep-pod
+     labels:
+       app: nginx
+   spec:
+     containers:
+       - name: nginx
+         image: nginx:latest
+         ports:
+           - containerPort: 80
+```
+
+**➡️STEP 7:** delete the pod first which we have create in previous step using command `kubectl delete -f pod.yml`, because in deployment.yml file we have included the pod creation instruction. 
+
+**➡️STEP 8:** run the command `kubectl apply -f deployment.yml`. Now check the running deployments using command `kubectl get deployment -n nginx ` and check the running pods using command `kubectl get pods -n nginx`.
+
+> Notes: 
+> 
+> *   to scale the application or (increase of decrease the number of pods/replicas) we can use the command `kubectl scale deployment/nginx-deployment -n nginx --replicas=5`
+> *   To get more information about the running pods we can run the command `kubectl get pods -n nginx -o wide`  
+>     ![](wide-comm.png)  
+> *   for doing any update regaiding the container inside the pods we can run command `kubectl set image deployment/nginx-deployment -n nginx nginx=nginx:1.27.3` . In this command we are trying to update the image version of nginx. In the process of updation, all the pod will not get updated at a time, some pods will be update and some pods will get update, like sequencially. In case if there will any error occored in the process of updation then the cluster will not get crushed, because some pod are still running with the old configuration.
+
+**➡️STEP 9:** create yml file `service.yml` and pest the code and pest the code
+
+```
+kind: Service
+apiVersion: v1
+metadata:
+ name: nginx-service
+ namespace: nginx
+spec:
+ selector:
+   app: nginx
+ ports:
+   - protocol: TCP
+     port: 80
+     targetPort: 80
+ type: ClusterIP
+```
+
+**➡️STEP 10:** run the command `kubectl apply -f service.yml`
+
+**➡️STEP 11:** after creating the service if you try to access the public ip in your browser, you will not able to do that, because nginx is running inside a container. it needs port forwarding, for that we need to run the command `kubectl port-forward service/nginx-service -n nginx 81:80 --address=0.0.0.0` or `sudo -E kubectl port-forward service/nginx-service -n nginx 81:80 --address=0.0.0.0`. after running this command we have to check if the port (in our case 81) is added to our inbound rule or not.
+
+Now if you access using public ip ( in our case [`http://52.66.41.106:81/`](http://52.66.41.106:81/) ) then you will see the application is running.  
+![](success-app-run.png)  
+ 
+
+###  **🎉🎉 The above architecture is completed 🎉🎉**
