@@ -34,6 +34,37 @@
     5.  Resource Quotes
     6.  Limits
     7.  Probes
+6.  Cluster Administration:
+    1.  RBAC
+    2.  Cluster Upgrade
+    3.  Custom Resource Definitions (CRDs)
+7.  Monitoring and Logging:
+    1.  Matrics Server
+    2.  Logging
+    3.  Monitoring Tools
+8.  Advanced Features:
+    1.  Operators
+    2.  Helm
+    3.  Service Mesh
+    4.  Kubernetes API
+9.  Security:
+    1.  Pod Security Standards (PSS)
+    2.  Image Scanning
+    3.  Network Policies
+    4.  Secrets Encryption
+10.  Cloud-Native Kubernetes:
+    1.  Managed Services (EKS, AKS, GKE)
+    2.  Cluster Autoscaler
+    3.  Spot/Preemptible Nodes
+11.  Debugging and Troubleshooting:
+    1.  Kubectl Debugging
+    2.  Logs
+    3.  Resource Usage Analysis
+12.  Projects:
+    1.  CI/CD Integration: Kubernetes with Jenkins CI/CD, GitOps with ArgoCD
+    2.  Microservices with MongoDB
+    3.  .Net, Python, Three-tier App
+    4.  Monitoring With Prometheus and Grafana
 
 ---
 
@@ -273,6 +304,50 @@ _**Now you cluster creation using KIND is done**_
 *   Services abstract the complexities of exposing pods while ensuring seamless communication with users.
 *   Deployments handle pod orchestration for reliability and scalability.
 
-> ### Create architecture above shown in then image (Namespace)
+### **Some basic command for namespaces**
 
-To get list of namespaces you can run command `kubectl get namespaces` or `kubectl get ns`
+*   To get list of namespaces you can run command `kubectl get namespaces` or `kubectl get ns`
+*   To get running pods list we can run command `kubectl get pods` . If you want to get running pods list in a specific namespace then run `kubectl get pods -n <namespace>`. if you don't mention namespace then this command will pick `default` namespace.
+*   To create namespace run command `kubectl create ns <your-namespace>` for example: `kubectl create ns nginx`.
+*   In this namespace we will create pod, deployment, services and this will make it accessable to the users.
+*   Now run `kubectl run nginx --image=nginx` to create pod inside which a docker container will run of nginx image. in the above command first nginx is specifying to a pod name and the second nginx is specifying to the image name which k8s will get from docker registry. Now run `kubectl get pods` to get the list of running pods.
+*   To delete pod run `kubectl delete pod nginx`, here nginx is pod name.
+*   To create and run a pod in a specific namespace  you should run  `kubectl run nginx --image=nginx -n nginx` where the last nginx is refering to the name of the namespace.
+*   To delete namespace run the command `kubectl delete ns nginx`.
+
+> 👉👉**Create architecture above shown in then image (Namespace)**
+
+We will create this architecture by creating yml files, and we will work inside nginx folder.
+
+**➡️STEP 1:** create a folder called nginx for work.
+
+**➡️STEP 2:** create a yml file called `namespace.yml` and pest the code
+
+```
+kind: Namespace
+apiVersion: v1
+metadata:
+ name: nginx
+```
+
+**➡️STEP 3:** run command `kubectl apply -f namespace.yml`
+
+**➡️STEP 4:** create yml file `pod.yml` and pest the code
+
+```
+kind: Pod
+apiVersion: v1
+metadata:
+ name: nginx-pod
+ namespace: nginx
+spec:
+ containers:
+   - name: nginx
+     image: nginx:latest
+     ports:
+       - containerPort: 80
+```
+
+**➡️STEP 5:** run command `kubectl apply -f pod.yml`
+
+> Note ▶ If you want to go inside the pod then run command `kubectl exec -it nginx-pod -n nginx --bash`
