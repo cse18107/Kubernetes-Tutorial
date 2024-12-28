@@ -582,3 +582,100 @@ spec:
 
 ![](cron.png)  
 All the commands are mentioned in the above image sc
+
+![](storage.drawio.png)  
+👉👉👉👉👉👉👉 **TODO 👈👈👈👈👈👈👈**
+
+![](projectsm.drawio.png)
+
+Taking [`https://github.com/LondheShubham153/django-notes-app.git`](https://github.com/LondheShubham153/django-notes-app.git) this repo for our project. After cloning this repo check out to `dev` branch
+
+**➡️STEP 1:**  run command  `git clone` [`https://github.com/LondheShubham153/django-notes-app.git`](https://github.com/LondheShubham153/django-notes-app.git)
+
+**➡️STEP 2:**  run command `git checkout dev`
+
+**➡️STEP 3:**  run command `docker build -t notes-app-k8s .`
+
+**➡️STEP 4:**  run command `docker images` to check if the image has created or not
+
+**➡️STEP 5:**  login to the docker account in command line through below steps
+
+1.   Login to docker hub in browser
+2.  Go to setting -> Personal Access Token ->  New access token ![](docker-hub.png)
+3.  copy the first command from the above image and paste in the cmd and press enter
+4.  then it will ask password, copy the second one from the above image and pest in the password section ![](login-dh.png)
+
+**➡️STEP 6:** now tag your image using command `docker image tag notes-app-k8s:latest soumodeep/notes-app-k8s:latest` ![](docker-tag-arc.drawio.png)
+
+**➡️STEP 7:** run command `docker push soumodeep/notes-app-k8s:latest` to push your local docker image to your docker registry.
+
+**➡️STEP 8:** create another folder called k8s and move inside this folder
+
+**➡️STEP 9:** create deployment running command `vim deployment.yml` and pest the code
+
+```
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+ name: notes-app-deployment
+ labels:
+   app: notes-app
+ namespace: notes-app
+spec:
+ replicas: 1
+ selector:
+   matchLabels:
+     app: notes-app
+ template:
+   metadata:
+     labels:
+       app: notes-app
+   spec:
+     containers:
+       - name: notes-app
+         image: soumodeep/notes-app-k8s
+         ports:
+           - containerPort: 8000
+```
+
+**➡️STEP 10:** create namespace running command `vim namespace.yml` and pest the code
+
+```
+kind: Namespace
+apiVersion: v1
+metadata:
+ name: notes-app
+```
+
+**➡️STEP 11:** create service running command `vim namespace.yml` and pest the code
+
+```
+kind: Service
+apiVersion: v1
+metadata:
+ name: notes-app-service
+ namespace: notes-app
+spec:
+ selector:
+   app: notes-app
+ ports:
+   - protocol: TCP
+     port: 8000
+     targetPort: 8000
+ type: ClusterIP
+```
+
+**➡️STEP 12:** now run the commands sequentially
+
+1.  `kubectl apply -f namespace.yml`
+2.  `kubectl apply -f deployment.yml`
+3.  `kubectl apply -f service.yml`
+
+**➡️STEP 13:** now run command `kubectl port-forward service/notes-app-service -n notes-app 8000:8000 --address=0.0.0.0` for port forwarding.
+
+**➡️STEP 14:** now you have to white list your port 8000 through setting inbound rule in ec2 instance.
+
+**➡️STEP 15:** now if you go to your browser and pest the url [`http://3.110.82.208:8000/`](http://3.110.82.208:8000/) then you will see your application is running in kubernetes.  
+![](running-app.png)
+
+**🎉🎉 The project is completed 🎉🎉**
