@@ -417,6 +417,168 @@ spec:
 
 Now if you access using public ip ( in our case [`http://52.66.41.106:81/`](http://52.66.41.106:81/) ) then you will see the application is running.  
 ![](success-app-run.png)  
- 
+**🎉🎉 The above architecture is completed 🎉🎉**
 
-###  **🎉🎉 The above architecture is completed 🎉🎉**
+![](replicasets.drawio.png)
+
+For replicaSets we can create a file called `replicasets.yml` and pest the code
+
+```
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata:
+ name: nginx-replicasets
+ namespace: nginx
+spec:
+ replicas: 2
+ selector:
+   matchLabels:
+     app: nginx
+ template:
+   metadata:
+     name: nginx-rep-pod
+     labels:
+       app: nginx
+   spec:
+     containers:
+       - name: nginx
+         image: nginx:latest
+         ports:
+           - containerPort: 80
+```
+
+then run the command `kubectl apply -f replicasets.yml`
+
+to get list of replica sets run command `kubectl get replicasets -n nginx`
+
+![](daemonsets.drawio.png)
+
+For replicaSets we can create a file called `daemonsets.yml` and pest the code
+
+```
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+ name: nginx-daemonsets
+ namespace: nginx
+spec:
+ selector:
+   matchLabels:
+     app: nginx
+ template:
+   metadata:
+     name: nginx-dmn-pod
+     labels:
+       app: nginx
+   spec:
+     containers:
+       - name: nginx
+         image: nginx:latest
+         ports:
+           - containerPort: 80
+```
+
+then run the command `kubectl apply -f daemonsets.yml`
+
+![](jobs.drawio.png)  
+Jobs represent one-off tasks that run to completion and then stop.
+
+A Job creates one or more Pods and will continue to retry execution of the Pods until a specified number of them successfully terminate. As pods successfully complete, the Job tracks the successful completions. When a specified number of successful completions is reached, the task (ie, Job) is complete. Deleting a Job will clean up the Pods it created. Suspending a Job will delete its active Pods until the Job is resumed again.
+
+A simple case is to create one Job object in order to reliably run one Pod to completion. The Job object will start a new Pod if the first Pod fails or is deleted (for example due to a node hardware failure or a node reboot).
+
+You can also use a Job to run multiple Pods in parallel.
+
+> 👉👉 _**Create a job**_
+
+**➡️STEP 1:** create a file `vim job.yml`
+
+**➡️STEP 2:** pest the code inside that file
+
+```
+kind: Job
+apiVersion: batch/v1
+metadata:
+ name: demo-job
+ namespace: nginx
+spec:
+ completions: 2
+ parallelism: 1
+ template:
+   metadata:
+     name: demo-job-pod
+     labels:
+       app: batch-task
+   spec:
+     containers:
+       - name: batch-container
+         image: busybox:latest
+         command: ["sh", "-c", "echo Hello Dosto! && sleep 10"]
+     restartPolicy: Never
+```
+
+you should have create namespace before hand, otherwise this above code will not work.
+
+**➡️STEP 3:** run the command `kubectl apply -f job.yml`
+
+**➡️STEP 4:** run the command to check the status of you job `kubectl get job -n nginx`
+
+**➡️STEP 5:** run the command to check the pod has created or not `kubectl get pods -n nginx`
+
+**➡️STEP 6:** copy the pod name and run the command `kubectl logs pod/demo-job-97kh7 -n nginx` 
+
+**➡️STEP 7:** to delete the job run command `kubectl delete -f job.yml`  
+![](job-commands.png)
+
+![](cron-jobs.drawio.png)  
+A _CronJob_ creates [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/) on a repeating schedule.
+
+CronJob is meant for performing regular scheduled actions such as backups, report generation, and so on.
+
+```
+kind: CronJob
+apiVersion: batch/v1
+metadata:
+ name: minute-backup
+ namespace: nginx
+spec:
+ schedule: "* * * * *"
+ jobTemplate:
+   spec:
+     template:
+       metadata:
+         name: minute-backup
+         labels:
+           app: minute-backup
+       spec:
+         containers:
+         - name: backup-container
+           image: busybox
+           command:
+           - sh
+           - -c
+           - >
+             echo "Backup Started" ;
+             mkdir -p /backups &&
+             mkdir -p /demo-data &&
+             cp -r /demo-data /backups &&
+             echo "Backup Completed" ;
+           volumeMounts:
+             - name: data-volume
+               mountPath: /demo-data
+             - name: backup-volume
+               mountPath: /backups
+         restartPolicy: OnFailure
+         volumes:
+           - name: data-volume
+             hostPath:
+               path: /demo-data
+               type: DirectoryOrCreate
+           - name: backup-volume
+             hostPath:
+               path: /backups
+               type: DirectoryOrCreate
+```
+
+![](cron.png)  
+All the commands are mentioned in the above image sc
