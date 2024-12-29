@@ -679,3 +679,102 @@ spec:
 ![](running-app.png)
 
 **🎉🎉 The project is completed 🎉🎉**
+
+![](ingressannotations.png)
+
+👉👉👉👉👉👉👉 **TODO 👈👈👈👈👈👈👈**
+
+![](statefullsets.png)  
+A StatefulSet runs a group of Pods, and maintains a sticky identity for each of those Pods. This is useful for managing applications that need persistent storage or a stable, unique network identity.
+
+Like a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), a StatefulSet manages Pods that are based on an identical container spec. Unlike a Deployment, a StatefulSet maintains a sticky identity for each of its Pods. These pods are created from the same spec, but are not interchangeable: each has a persistent identifier that it maintains across any rescheduling.
+
+If you want to use storage volumes to provide persistence for your workload, you can use a StatefulSet as part of the solution. Although individual Pods in a StatefulSet are susceptible to failure, the persistent Pod identifiers make it easier to match existing volumes to the new Pods that replace any that have failed.
+
+![](statefullmysql.png)
+
+**➡️STEP 1:**  run command `vim statefulsets.yml` and pest the code 
+
+```
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+ name: mysql-statefulset
+ namespace: mysql
+spec:
+ serviceName: mysql-service
+ replicas: 3
+ selector:
+   matchLabels:
+     app: mysql
+ template:
+   metadata:
+     labels:
+       app: mysql
+   spec:
+     containers:
+     - name: mysql
+       image: mysql:8.0
+       ports:
+       - containerPort: 3306
+       env:
+       - name: MYSQL_ROOT_PASSWORD
+         value: root
+       - name: MYSQL_DATABASE
+         value: devops
+       volumeMounts:
+       - name: mysql-data
+         mountPath: /var/lib/mysql
+ volumeClaimTemplates:
+ - metadata:
+     name: mysql-data
+   spec:
+     accessModes: [ "ReadWriteOnce" ]
+     resources:
+       requests:
+         storage: 1Gi
+```
+
+**➡️STEP 2:** run command `vim namespace.yml ` and pest the code
+
+```
+kind: Namespace
+apiVersion: v1
+metadata:
+ name: mysql
+```
+
+**➡️STEP 3:** run command `vim service.yml ` and pest the code
+
+```
+kind: Service
+apiVersion: v1
+metadata:
+ name: mysql-service
+ namespace: mysql
+spec:
+ clusterIP: None
+ selector:
+   app: mysql
+ ports:
+   - name: mysql
+     protocol: TCP
+     port: 3306
+     targetPort: 3306
+```
+
+**➡️STEP 3:** now run these commands sequentianly
+
+1.  `kubectl apply -f namespace.yml`
+2.  `kubectl apply -f service.yml`
+3.  `kubectl apply -f statefulsets.yml`
+
+**➡️STEP 4:** go inside mysql bash using command `kubectl exec -it mysql-statefulset-0 -n mysql -- bash`
+
+and check if your database is created or not using command `show databases;`  
+![](ubudb.png)  
+in the above picture we can see the db has create successfully.
+
+now if you delete any one pod using command `kubectl delete pod mysql-statefulset-0 -n mysql`  
+then with the same name another pod will be created at the same time, in other cases that will not happen  
+![](delete-pod.png)
