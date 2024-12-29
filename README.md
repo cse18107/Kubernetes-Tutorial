@@ -763,13 +763,13 @@ spec:
      targetPort: 3306
 ```
 
-**➡️STEP 3:** now run these commands sequentianly
+**➡️STEP 4:** now run these commands sequentianly
 
 1.  `kubectl apply -f namespace.yml`
 2.  `kubectl apply -f service.yml`
 3.  `kubectl apply -f statefulsets.yml`
 
-**➡️STEP 4:** go inside mysql bash using command `kubectl exec -it mysql-statefulset-0 -n mysql -- bash`
+**➡️STEP 5:** go inside mysql bash using command `kubectl exec -it mysql-statefulset-0 -n mysql -- bash`
 
 and check if your database is created or not using command `show databases;`  
 ![](ubudb.png)  
@@ -778,3 +778,79 @@ in the above picture we can see the db has create successfully.
 now if you delete any one pod using command `kubectl delete pod mysql-statefulset-0 -n mysql`  
 then with the same name another pod will be created at the same time, in other cases that will not happen  
 ![](delete-pod.png)
+
+![](configmap.png)
+
+A ConfigMap is an API object used to store non-confidential data in key-value pairs. [Pods](https://kubernetes.io/docs/concepts/workloads/pods/) can consume ConfigMaps as environment variables, command-line arguments, or as configuration files in a [volume](https://kubernetes.io/docs/concepts/storage/volumes/).
+
+A ConfigMap allows you to decouple environment-specific configuration from your [container images](https://kubernetes.io/docs/reference/glossary/?all=true#term-image), so that your applications are easily portable.
+
+lets create configmap file and take mysql cluster to demonstrate the usecase of configmap.
+
+**➡️STEP 1:**  create a file configmap.yml `vim configmap.yml` pest the code 
+
+```
+kind: ConfigMap
+apiVersion: v1
+metadata:
+ name: mysql-config-map
+ namespace: mysql
+data:
+ MYSQL_DATABASE: devops
+```
+
+**➡️STEP 2:** update the statefulsets.yml file in `env` section
+
+```
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+ name: mysql-statefulset
+ namespace: mysql
+spec:
+ serviceName: mysql-service
+ replicas: 3
+ selector:
+   matchLabels:
+     app: mysql
+ template:
+   metadata:
+     labels:
+       app: mysql
+   spec:
+     containers:
+     - name: mysql
+       image: mysql:8.0
+       ports:
+       - containerPort: 3306
+       env:
+       - name: MYSQL_ROOT_PASSWORD
+         value: root
+       - name: MYSQL_DATABASE
+         valueFrom:
+           configMapKeyRef:
+             name: mysql-config-map
+             key: MYSQL_DATABASE
+       volumeMounts:
+       - name: mysql-data
+         mountPath: /var/lib/mysql
+ volumeClaimTemplates:
+ - metadata:
+     name: mysql-data
+   spec:
+     accessModes: [ "ReadWriteOnce" ]
+     resources:
+       requests:
+         storage: 1Gi
+```
+
+**➡️STEP 3:** run command `kubectl apply -f configmap.yml`
+
+**➡️STEP 4:** first delete the existing stateful set running command `kubectl delete mysql-statefuset -n mysql`
+
+**➡️STEP 5:** then run `kubectl apply -f statefulsets.yml`
+
+**➡️STEP 6:** check pods are created or not `kubectl get pods -n mysql`
+
+![](secret.png)  
+sdf
